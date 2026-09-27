@@ -4,13 +4,13 @@
 // ============================================================
 
 // ===== CONSTANTS =====
-var COLS = 13;
-var ROWS = 10;
-var TILE = 60;
+var COLS = 11;
+var ROWS = 9;
+var TILE = 64;
 var BOMB_TIMER = 5000;
 var FREEZE_DUR = 5000;
 var PLAYER_SPEED = 150;
-var DOG_SPEED = 550;
+var DOG_SPEED = 2500;
 var BRICK_CHANCE = 0.45;
 
 var CELL = { STONE: 0, GRASS: 1, BRICK: 2 };
