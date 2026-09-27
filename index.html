@@ -1,0 +1,1654 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BOMBSKUY</title>
+    <style>
+      /* =============================================
+   BOMBSKUY - style.css
+   Game resolution: 1000x600px (centered on screen)
+   Grid: 13 cols × 10 rows @ 60px per tile
+   Gameboard: 780px | Sidebar: 220px
+============================================= */
+
+      /* ====== RESET ====== */
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      /* ====== BODY — centers the game on any screen ====== */
+      body {
+        background: #111;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        font-family: "Arial Black", Arial, sans-serif;
+      }
+
+      /* ====== GAME WRAPPER ====== */
+      #game-wrapper {
+        width: 1000px;
+        height: 600px;
+        position: relative;
+        overflow: hidden;
+        background: #1a1a1a;
+      }
+
+      /* ====== UTILITY ====== */
+      .hidden {
+        display: none !important;
+      }
+
+      /* =============================================
+   WELCOME SCREEN
+============================================= */
+      #welcome-screen {
+        position: absolute;
+        inset: 0;
+        background: #fff;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 14px;
+        z-index: 10;
+      }
+
+      #welcome-icons {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+      }
+
+      #welcome-icons img {
+        width: 56px;
+        height: 56px;
+        object-fit: contain;
+      }
+
+      #logo {
+        height: 48px;
+        object-fit: contain;
+        margin-bottom: 4px;
+      }
+
+      #username-input,
+      #level-select {
+        width: 320px;
+        padding: 13px 16px;
+        background: #c94b13;
+        border: none;
+        border-radius: 6px;
+        color: #fff;
+        font-size: 15px;
+        font-family: inherit;
+        cursor: pointer;
+        appearance: none;
+        -webkit-appearance: none;
+      }
+
+      /* Custom dropdown arrow for select */
+      #level-select {
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%23fff' d='M6 8L0 0h12z'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 14px center;
+        background-color: #c94b13;
+        padding-right: 36px;
+      }
+
+      #level-select option {
+        background: #333;
+        color: #fff;
+      }
+
+      #username-input::placeholder {
+        color: rgba(255, 255, 255, 0.85);
+      }
+
+      #username-input:focus {
+        outline: 2px solid #ff6a2f;
+      }
+
+      #welcome-buttons {
+        display: flex;
+        gap: 16px;
+        margin-top: 4px;
+      }
+
+      #play-btn,
+      #instruction-btn {
+        padding: 12px 36px;
+        background: #111;
+        color: #fff;
+        border: none;
+        border-radius: 6px;
+        font-size: 15px;
+        font-family: "Arial Black", Arial, sans-serif;
+        font-weight: bold;
+        cursor: pointer;
+        transition: background 0.15s;
+      }
+
+      #play-btn:hover:not(:disabled),
+      #instruction-btn:hover {
+        background: #333;
+      }
+
+      #play-btn:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+      }
+
+      /* =============================================
+   INSTRUCTION POPUP
+============================================= */
+      #instruction-popup {
+        position: absolute;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.55);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 50;
+      }
+
+      #instruction-box {
+        background: #fff;
+        border-radius: 10px;
+        padding: 32px 44px 36px;
+        width: 380px;
+        position: relative;
+      }
+
+      #instruction-box h2 {
+        margin-bottom: 18px;
+        font-size: 22px;
+        text-align: center;
+      }
+
+      #instruction-box ol {
+        padding-left: 20px;
+        font-size: 15px;
+        line-height: 2.2;
+        color: #333;
+      }
+
+      #close-instruction {
+        position: absolute;
+        top: 10px;
+        right: 14px;
+        background: none;
+        border: none;
+        font-size: 18px;
+        font-weight: bold;
+        cursor: pointer;
+        color: #444;
+        line-height: 1;
+      }
+
+      #close-instruction:hover {
+        color: #c94b13;
+      }
+
+      /* =============================================
+   COUNTDOWN OVERLAY
+============================================= */
+      #countdown-overlay {
+        position: absolute;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.65);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 40;
+      }
+
+      #countdown-number {
+        font-size: 130px;
+        font-weight: 900;
+        color: #fff;
+        text-shadow: 0 4px 24px rgba(0, 0, 0, 0.6);
+        animation: pop-in 0.7s ease-out;
+      }
+
+      @keyframes pop-in {
+        from {
+          transform: scale(1.6);
+          opacity: 0;
+        }
+        to {
+          transform: scale(1);
+          opacity: 1;
+        }
+      }
+
+      /* =============================================
+   GAME SCREEN
+============================================= */
+      #game-screen {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: row;
+      }
+
+      /* ====== GAMEBOARD AREA ====== */
+      #gameboard-area {
+        width: 780px;
+        height: 600px;
+        position: relative; /* anchor for absolutely-positioned entities */
+        flex-shrink: 0;
+        overflow: hidden;
+        background: url("Images/background.jpg") no-repeat center / 780px 600px;
+      }
+
+      #gameboard {
+        width: 780px;
+        height: 600px;
+        display: grid;
+        grid-template-columns: repeat(13, 60px);
+        grid-template-rows: repeat(10, 60px);
+      }
+
+      /* ====== CELL TYPES ====== */
+      .cell {
+        width: 60px;
+        height: 60px;
+        position: relative;
+        overflow: hidden;
+      }
+
+      /* Stone wall — indestructible; transparent so background.png shows through */
+      .cell-stone {
+        background: transparent;
+      }
+
+      /* Open ground — transparent so background.png shows through */
+      .cell-grass {
+        background: transparent;
+      }
+
+      /* Destructible brick wall — transparent base, wall.png added as child by JS */
+      .cell-brick {
+        background: transparent;
+      }
+
+      /* Wall overlay inside .cell-brick (added/removed by JS) */
+      .wall-img {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        pointer-events: none;
+      }
+
+      /* =============================================
+   GAME ENTITIES
+   All positioned absolutely inside #gameboard-area
+============================================= */
+      .entity {
+        position: absolute;
+        width: 60px;
+        height: 60px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        pointer-events: none;
+        transition:
+          top 0.08s linear,
+          left 0.08s linear;
+      }
+
+      .entity img {
+        width: 54px;
+        height: 54px;
+        object-fit: contain;
+      }
+
+      #player {
+        z-index: 6;
+      }
+      .dog {
+        z-index: 5;
+      }
+
+      /* Bomb */
+      .bomb {
+        position: absolute;
+        width: 60px;
+        height: 60px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 4;
+        pointer-events: none;
+      }
+
+      .bomb img {
+        width: 46px;
+        height: 46px;
+        object-fit: contain;
+        animation: bomb-pulse 0.6s ease-in-out infinite alternate;
+      }
+
+      @keyframes bomb-pulse {
+        from {
+          transform: scale(1);
+        }
+        to {
+          transform: scale(1.12);
+        }
+      }
+
+      /* Items (heart, tnt, ice) */
+      .item {
+        position: absolute;
+        width: 60px;
+        height: 60px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 3;
+        pointer-events: none;
+        animation: item-float 1s ease-in-out infinite alternate;
+      }
+
+      .item img {
+        width: 42px;
+        height: 42px;
+        object-fit: contain;
+      }
+
+      @keyframes item-float {
+        from {
+          transform: translateY(0);
+        }
+        to {
+          transform: translateY(-5px);
+        }
+      }
+
+      /* ====== EXPLOSION ====== */
+      .explosion {
+        position: absolute;
+        width: 60px;
+        height: 60px;
+        z-index: 7;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        pointer-events: none;
+        animation: explode-cell 0.5s ease-out forwards;
+      }
+
+      .explosion::after {
+        content: "💥";
+        font-size: 44px;
+        animation: explode-icon 0.5s ease-out forwards;
+      }
+
+      @keyframes explode-cell {
+        0% {
+          opacity: 1;
+          background: rgba(255, 160, 0, 0.5);
+        }
+        100% {
+          opacity: 0;
+          background: transparent;
+        }
+      }
+
+      @keyframes explode-icon {
+        0% {
+          transform: scale(0.5);
+          opacity: 1;
+        }
+        60% {
+          transform: scale(1.4);
+        }
+        100% {
+          transform: scale(1);
+          opacity: 0;
+        }
+      }
+
+      /* ====== STATUS EFFECTS ====== */
+      /* Hurt flash */
+      .hurt {
+        animation: hurt-flash 0.5s ease;
+      }
+
+      @keyframes hurt-flash {
+        0%,
+        100% {
+          filter: brightness(1);
+        }
+        25% {
+          filter: brightness(3) saturate(0);
+        }
+        75% {
+          filter: brightness(3) saturate(0);
+        }
+      }
+
+      /* Frozen tint */
+      .frozen img {
+        filter: hue-rotate(180deg) brightness(1.3);
+      }
+
+      /* =============================================
+   SIDEBAR
+============================================= */
+      #sidebar {
+        flex: 1;
+        background: #2b2b2b;
+        color: #fff;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 18px 14px;
+        gap: 14px;
+      }
+
+      #sidebar-logo {
+        height: 34px;
+        object-fit: contain;
+      }
+
+      #player-info {
+        width: 100%;
+        font-size: 13px;
+        line-height: 2;
+      }
+
+      #player-info p {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      /* Hearts row */
+      #hearts-display {
+        display: flex;
+        gap: 6px;
+        justify-content: center;
+        min-height: 40px;
+        align-items: center;
+      }
+
+      #hearts-display img {
+        width: 36px;
+        height: 36px;
+        object-fit: contain;
+      }
+
+      /* Stat rows (walls / tnt / ice) */
+      .stat-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 20px;
+        font-weight: bold;
+        width: 100%;
+        justify-content: center;
+      }
+
+      .stat-row img {
+        width: 46px;
+        height: 46px;
+        object-fit: contain;
+      }
+
+      /* =============================================
+   PAUSE POPUP
+============================================= */
+      #pause-popup {
+        position: absolute;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.6);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 30;
+      }
+
+      #pause-box {
+        background: #fff;
+        border-radius: 10px;
+        padding: 44px 70px;
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        gap: 22px;
+      }
+
+      #pause-box h2 {
+        font-size: 32px;
+        letter-spacing: 3px;
+        color: #111;
+      }
+
+      #continue-btn {
+        padding: 12px 36px;
+        background: #c94b13;
+        color: #fff;
+        border: none;
+        border-radius: 6px;
+        font-size: 15px;
+        font-weight: bold;
+        cursor: pointer;
+        font-family: inherit;
+      }
+
+      #continue-btn:hover {
+        background: #a83a0e;
+      }
+
+      /* =============================================
+   GAME OVER SCREEN
+============================================= */
+      #gameover-screen {
+        position: absolute;
+        inset: 0;
+        background: #2b2b2b;
+        color: #fff;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        gap: 20px;
+        z-index: 20;
+      }
+
+      #gameover-screen h1 {
+        font-size: 50px;
+      }
+
+      #gameover-msg {
+        font-size: 15px;
+        color: #bbb;
+      }
+
+      #gameover-stats {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        font-size: 22px;
+        font-weight: bold;
+      }
+
+      #gameover-stats img {
+        width: 50px;
+        height: 50px;
+        object-fit: contain;
+      }
+
+      #gameover-buttons {
+        display: flex;
+        gap: 16px;
+        margin-top: 6px;
+      }
+
+      /* =============================================
+   LEADERBOARD SCREEN
+============================================= */
+      #leaderboard-screen {
+        position: absolute;
+        inset: 0;
+        background: #2b2b2b;
+        color: #fff;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        gap: 26px;
+        z-index: 20;
+      }
+
+      #leaderboard-screen h1 {
+        font-size: 44px;
+      }
+
+      #leaderboard-table {
+        border-collapse: collapse;
+        min-width: 480px;
+        font-size: 15px;
+      }
+
+      #leaderboard-table th,
+      #leaderboard-table td {
+        padding: 10px 22px;
+        text-align: center;
+        border-bottom: 1px solid #444;
+      }
+
+      #leaderboard-table th {
+        color: #ccc;
+        font-size: 13px;
+        font-weight: normal;
+      }
+
+      #leaderboard-table th img,
+      #leaderboard-table td img {
+        width: 30px;
+        height: 30px;
+        object-fit: contain;
+        vertical-align: middle;
+      }
+
+      #leaderboard-table th:first-child,
+      #leaderboard-table td:first-child {
+        text-align: left;
+        font-weight: bold;
+      }
+
+      #leaderboard-buttons {
+        display: flex;
+        gap: 16px;
+      }
+
+      /* =============================================
+   SHARED BUTTON STYLES
+   Apply class to buttons in game-over / leaderboard
+============================================= */
+      .btn-orange {
+        padding: 12px 30px;
+        background: #c94b13;
+        color: #fff;
+        border: none;
+        border-radius: 6px;
+        font-size: 15px;
+        font-weight: bold;
+        cursor: pointer;
+        font-family: inherit;
+        transition: background 0.15s;
+      }
+
+      .btn-orange:hover {
+        background: #a83a0e;
+      }
+
+      .btn-blue {
+        padding: 12px 30px;
+        background: #1e6ebf;
+        color: #fff;
+        border: none;
+        border-radius: 6px;
+        font-size: 15px;
+        font-weight: bold;
+        cursor: pointer;
+        font-family: inherit;
+        transition: background 0.15s;
+      }
+
+      .btn-blue:hover {
+        background: #1557a0;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="game-wrapper">
+      <!-- ====== WELCOME SCREEN ====== -->
+      <div id="welcome-screen">
+        <img src="Images/logo.png" id="logo" alt="BOMBSKUY" />
+        <input
+          type="text"
+          id="username-input"
+          placeholder="Input Username"
+          autocomplete="off"
+        />
+        <select id="level-select">
+          <option value="" disabled selected>Select Level</option>
+          <option value="easy">Easy</option>
+          <option value="medium">Medium</option>
+          <option value="hard">Hard</option>
+        </select>
+        <div id="welcome-buttons">
+          <button id="play-btn" disabled>Play</button>
+          <button id="instruction-btn">Instruction</button>
+        </div>
+      </div>
+
+      <!-- ====== INSTRUCTION POPUP ====== -->
+      <div id="instruction-popup" class="hidden">
+        <div id="instruction-box">
+          <button id="close-instruction">X</button>
+          <h2>How to Play</h2>
+          <ol>
+            <li>Input username</li>
+            <li>Put the bomb</li>
+            <li>Blow up as many walls as possible</li>
+            <li>Blow up enemies</li>
+            <li>Enjoy!</li>
+          </ol>
+        </div>
+      </div>
+
+      <!-- ====== COUNTDOWN ====== -->
+      <div id="countdown-overlay" class="hidden">
+        <div id="countdown-number"></div>
+      </div>
+
+      <!-- ====== GAME SCREEN ====== -->
+      <div id="game-screen" class="hidden">
+        <div id="gameboard-area">
+          <div id="gameboard"></div>
+        </div>
+        <div id="sidebar">
+          <img src="Images/logo_white.png" id="sidebar-logo" alt="BOMBSKUY" />
+          <div id="player-info">
+            <p>Player : <span id="player-name"></span></p>
+            <p>Time &nbsp;&nbsp;: <span id="timer">00:00</span></p>
+          </div>
+          <div id="hearts-display"></div>
+          <div class="stat-row">
+            <img src="Images/wall_crack.png" alt="walls destroyed" />
+            <span>= <span id="walls-count">0</span></span>
+          </div>
+          <div class="stat-row">
+            <img src="Images/tnt.png " alt="tnt collected" />
+            <span>= <span id="tnt-count">0</span></span>
+          </div>
+          <div class="stat-row">
+            <img src="Images/ice.png" alt="ice collected" />
+            <span>= <span id="ice-count">0</span></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ====== PAUSE POPUP ====== -->
+      <div id="pause-popup" class="hidden">
+        <div id="pause-box">
+          <h2>PAUSED</h2>
+          <button id="continue-btn">Continue</button>
+        </div>
+      </div>
+
+      <!-- ====== GAME OVER SCREEN ====== -->
+      <div id="gameover-screen" class="hidden">
+        <h1>Game Over!</h1>
+        <p id="gameover-msg"></p>
+        <div id="gameover-stats">
+          <img src="Images/wall_crack.png" alt="walls" />
+          <span>= <span id="go-walls">0</span></span>
+          <img src="Images/tnt.png" alt="tnt" />
+          <span>= <span id="go-tnt">0</span></span>
+          <img src="Images/ice.png" alt="ice" />
+          <span>= <span id="go-ice">0</span></span>
+        </div>
+        <div id="gameover-buttons">
+          <button id="save-score-btn">Save Score</button>
+          <button id="leaderboard-btn">Leaderboards</button>
+        </div>
+      </div>
+
+      <!-- ====== LEADERBOARD SCREEN ====== -->
+      <div id="leaderboard-screen" class="hidden">
+        <h1>Leaderboards</h1>
+        <table id="leaderboard-table">
+          <thead>
+            <tr>
+              <th>Player Name</th>
+              <th>Time</th>
+              <th><img src="Images/wall_crack.png" alt="walls" /></th>
+              <th><img src="Images/tnt.png" alt="tnt" /></th>
+              <th><img src="Images/ice.png" alt="ice" /></th>
+            </tr>
+          </thead>
+          <tbody id="leaderboard-body"></tbody>
+        </table>
+        <div id="leaderboard-buttons">
+          <button id="play-again-btn">Play Again</button>
+          <button id="reset-btn">Reset</button>
+        </div>
+      </div>
+    </div>
+  </body>
+
+  <script>
+    // ============================================================
+    //  BOMBSKUY — game.js
+    //  No ES6 Modules. Target: Google Chrome.
+    // ============================================================
+
+    // ===== CONSTANTS =====
+    var COLS = 13;
+    var ROWS = 10;
+    var TILE = 60;
+    var BOMB_TIMER = 5000;
+    var FREEZE_DUR = 5000;
+    var PLAYER_SPEED = 150;
+    var DOG_SPEED = 550;
+    var BRICK_CHANCE = 0.45;
+
+    var CELL = { STONE: 0, GRASS: 1, BRICK: 2 };
+    var ITEM = { HEART: "heart", TNT: "tnt", ICE: "ice" };
+
+    var DIFFICULTY = {
+      easy: { dogs: 1 },
+      medium: { dogs: 2 },
+      hard: { dogs: 3 },
+    };
+
+    // Fixed inner stone wall positions — must match background.png
+    var STONE_WALLS = [
+      [2, 2],
+      [2, 4],
+      [2, 6],
+      [2, 8],
+      [4, 2],
+      [4, 4],
+      [4, 6],
+      [4, 8],
+      [6, 2],
+      [6, 4],
+      [6, 6],
+      [6, 8],
+    ];
+
+    // Cells kept clear of bricks (player start zone)
+    var SAFE = { "1,1": 1, "1,2": 1, "2,1": 1 };
+
+    // 4-directional vectors
+    var DIRS = [
+      { dr: -1, dc: 0, dir: "up" },
+      { dr: 1, dc: 0, dir: "down" },
+      { dr: 0, dc: -1, dir: "left" },
+      { dr: 0, dc: 1, dir: "right" },
+    ];
+
+    // ===== GAME STATE =====
+    var S = {};
+    var totalPaused = 0;
+    var pauseAt = 0;
+
+    function resetState() {
+      S = {
+        username: "",
+        difficulty: "",
+        grid: [],
+        items: {},
+        player: {
+          row: 1,
+          col: 1,
+          lives: 3,
+          range: 1,
+          frozen: false,
+          frozenTimer: null,
+          dir: "down",
+        },
+        dogs: [],
+        bombs: [],
+        wallsDestroyed: 0,
+        tntCollected: 0,
+        iceCollected: 0,
+        startTime: 0,
+        timerInterval: null,
+        moveInterval: null,
+        dogInterval: null,
+        paused: false,
+        gameOver: false,
+        keys: {},
+      };
+      totalPaused = 0;
+      pauseAt = 0;
+    }
+
+    // ===== DOM REFS =====
+    var D = {
+      welcome: document.getElementById("welcome-screen"),
+      userInput: document.getElementById("username-input"),
+      levelSelect: document.getElementById("level-select"),
+      playBtn: document.getElementById("play-btn"),
+      instrBtn: document.getElementById("instruction-btn"),
+      instrPopup: document.getElementById("instruction-popup"),
+      closeInstr: document.getElementById("close-instruction"),
+      countdown: document.getElementById("countdown-overlay"),
+      countdownNum: document.getElementById("countdown-number"),
+      gameScreen: document.getElementById("game-screen"),
+      board: document.getElementById("gameboard"),
+      boardArea: document.getElementById("gameboard-area"),
+      playerName: document.getElementById("player-name"),
+      timer: document.getElementById("timer"),
+      hearts: document.getElementById("hearts-display"),
+      wallsCount: document.getElementById("walls-count"),
+      tntCount: document.getElementById("tnt-count"),
+      iceCount: document.getElementById("ice-count"),
+      pausePopup: document.getElementById("pause-popup"),
+      continueBtn: document.getElementById("continue-btn"),
+      gameoverScreen: document.getElementById("gameover-screen"),
+      gameoverMsg: document.getElementById("gameover-msg"),
+      goWalls: document.getElementById("go-walls"),
+      goTnt: document.getElementById("go-tnt"),
+      goIce: document.getElementById("go-ice"),
+      saveScoreBtn: document.getElementById("save-score-btn"),
+      lbBtn: document.getElementById("leaderboard-btn"),
+      lbScreen: document.getElementById("leaderboard-screen"),
+      lbBody: document.getElementById("leaderboard-body"),
+      playAgainBtn: document.getElementById("play-again-btn"),
+      resetBtn: document.getElementById("reset-btn"),
+    };
+
+    // ============================================================
+    //  WELCOME SCREEN
+    // ============================================================
+    D.userInput.addEventListener("input", function () {
+      D.playBtn.disabled = this.value.trim() === "";
+    });
+
+    D.instrBtn.addEventListener("click", function () {
+      D.instrPopup.classList.remove("hidden");
+    });
+
+    D.closeInstr.addEventListener("click", function () {
+      D.instrPopup.classList.add("hidden");
+    });
+
+    D.playBtn.addEventListener("click", function () {
+      var name = D.userInput.value.trim();
+      var level = D.levelSelect.value;
+      if (!name || !level) return;
+      resetState();
+      S.username = name;
+      S.difficulty = level;
+      startCountdown();
+    });
+
+    // ============================================================
+    //  COUNTDOWN
+    // ============================================================
+    function startCountdown() {
+      D.welcome.classList.add("hidden");
+      D.countdown.classList.remove("hidden");
+
+      var n = 3;
+      D.countdownNum.textContent = n;
+
+      var iv = setInterval(function () {
+        n--;
+        if (n <= 0) {
+          clearInterval(iv);
+          D.countdown.classList.add("hidden");
+          startGame();
+        } else {
+          D.countdownNum.textContent = n;
+          // Replay pop-in animation
+          D.countdownNum.style.animation = "none";
+          void D.countdownNum.offsetWidth;
+          D.countdownNum.style.animation = "";
+        }
+      }, 1000);
+    }
+
+    // ============================================================
+    //  GAME START
+    // ============================================================
+    var playerEl = null;
+
+    function startGame() {
+      stopTimers();
+      clearBoardEntities();
+      buildGrid();
+      renderGrid();
+      createPlayer();
+      spawnDogs();
+
+      D.playerName.textContent = S.username;
+      D.timer.textContent = "00:00";
+      renderHearts();
+      renderStats();
+      D.gameScreen.classList.remove("hidden");
+
+      S.startTime = Date.now();
+      S.timerInterval = setInterval(tickTimer, 1000);
+      S.moveInterval = setInterval(tickPlayer, PLAYER_SPEED);
+      S.dogInterval = setInterval(tickDogs, DOG_SPEED);
+    }
+
+    function stopTimers() {
+      clearInterval(S.timerInterval);
+      clearInterval(S.moveInterval);
+      clearInterval(S.dogInterval);
+    }
+
+    function clearBoardEntities() {
+      var els = D.boardArea.querySelectorAll(
+        ".entity, .bomb, .item, .explosion",
+      );
+      els.forEach(function (el) {
+        el.remove();
+      });
+    }
+
+    // ============================================================
+    //  GRID — BUILD
+    // ============================================================
+    function buildGrid() {
+      var r, c;
+      for (r = 0; r < ROWS; r++) {
+        S.grid[r] = [];
+        for (c = 0; c < COLS; c++) {
+          S.grid[r][c] =
+            r === 0 || r === ROWS - 1 || c === 0 || c === COLS - 1
+              ? CELL.STONE
+              : CELL.GRASS;
+        }
+      }
+
+      STONE_WALLS.forEach(function (pos) {
+        S.grid[pos[0]][pos[1]] = CELL.STONE;
+      });
+
+      // Random brick walls with hidden items
+      for (r = 1; r < ROWS - 1; r++) {
+        for (c = 1; c < COLS - 1; c++) {
+          if (S.grid[r][c] !== CELL.GRASS) continue;
+          if (SAFE[r + "," + c]) continue;
+          if (Math.random() >= BRICK_CHANCE) continue;
+
+          S.grid[r][c] = CELL.BRICK;
+
+          var roll = Math.random();
+          if (roll < 0.15) S.items[r + "," + c] = ITEM.HEART;
+          else if (roll < 0.3) S.items[r + "," + c] = ITEM.TNT;
+          else if (roll < 0.45) S.items[r + "," + c] = ITEM.ICE;
+        }
+      }
+    }
+
+    // ============================================================
+    //  GRID — RENDER
+    // ============================================================
+    function renderGrid() {
+      D.board.innerHTML = "";
+
+      for (var r = 0; r < ROWS; r++) {
+        for (var c = 0; c < COLS; c++) {
+          var cell = document.createElement("div");
+          cell.className = "cell";
+          cell.id = "c" + r + "_" + c;
+
+          if (S.grid[r][c] === CELL.BRICK) {
+            cell.classList.add("cell-brick");
+            var wImg = document.createElement("img");
+            wImg.src = "Images/wall.png";
+            wImg.className = "wall-img";
+            cell.appendChild(wImg);
+          } else {
+            cell.classList.add(
+              S.grid[r][c] === CELL.STONE ? "cell-stone" : "cell-grass",
+            );
+          }
+
+          D.board.appendChild(cell);
+        }
+      }
+    }
+
+    // ============================================================
+    //  PLAYER
+    // ============================================================
+    function createPlayer() {
+      playerEl = document.createElement("div");
+      playerEl.id = "player";
+      playerEl.className = "entity";
+      playerEl.innerHTML =
+        '<img id="player-img" src="Images/char_down.png">' +
+        '<div id="player-badge" style="position:absolute;bottom:2px;right:2px;z-index:9;line-height:0;"></div>';
+
+      placeAt(playerEl, S.player.row, S.player.col);
+      D.boardArea.appendChild(playerEl);
+    }
+
+    function updatePlayerSprite() {
+      var img = document.getElementById("player-img");
+      if (img) img.src = "Images/char_" + S.player.dir + ".png";
+    }
+
+    // ============================================================
+    //  INPUT
+    // ============================================================
+    var MOVE_KEYS = {
+      arrowup: 1,
+      w: 1,
+      arrowdown: 1,
+      s: 1,
+      arrowleft: 1,
+      a: 1,
+      arrowright: 1,
+      d: 1,
+    };
+    var KEY_DIR = {
+      arrowup: { dr: -1, dc: 0, dir: "up" },
+      w: { dr: -1, dc: 0, dir: "up" },
+      arrowdown: { dr: 1, dc: 0, dir: "down" },
+      s: { dr: 1, dc: 0, dir: "down" },
+      arrowleft: { dr: 0, dc: -1, dir: "left" },
+      a: { dr: 0, dc: -1, dir: "left" },
+      arrowright: { dr: 0, dc: 1, dir: "right" },
+      d: { dr: 0, dc: 1, dir: "right" },
+    };
+    var KEY_ORDER = [
+      "arrowup",
+      "w",
+      "arrowdown",
+      "s",
+      "arrowleft",
+      "a",
+      "arrowright",
+      "d",
+    ];
+
+    document.addEventListener("keydown", function (e) {
+      var key = e.key.toLowerCase();
+      if (key === " ") {
+        e.preventDefault();
+        if (!S.paused && !S.gameOver) placeBomb();
+        return;
+      }
+      if (key === "escape") {
+        e.preventDefault();
+        togglePause();
+        return;
+      }
+      if (MOVE_KEYS[key]) {
+        e.preventDefault();
+        S.keys[key] = true;
+      }
+    });
+
+    document.addEventListener("keyup", function (e) {
+      delete S.keys[e.key.toLowerCase()];
+    });
+
+    // ============================================================
+    //  PLAYER TICK
+    // ============================================================
+    function tickPlayer() {
+      if (S.paused || S.gameOver || S.player.frozen) return;
+
+      for (var i = 0; i < KEY_ORDER.length; i++) {
+        var key = KEY_ORDER[i];
+        if (!S.keys[key]) continue;
+
+        var m = KEY_DIR[key];
+        var nr = S.player.row + m.dr;
+        var nc = S.player.col + m.dc;
+
+        S.player.dir = m.dir;
+        updatePlayerSprite();
+
+        if (canWalk(nr, nc)) {
+          S.player.row = nr;
+          S.player.col = nc;
+          placeAt(playerEl, nr, nc);
+          pickupItem(nr, nc);
+          checkDogCollision();
+        }
+        break;
+      }
+    }
+
+    function canWalk(r, c) {
+      if (r < 0 || r >= ROWS || c < 0 || c >= COLS) return false;
+      return S.grid[r][c] === CELL.GRASS;
+    }
+
+    // ============================================================
+    //  DOGS
+    // ============================================================
+    function spawnDogs() {
+      var count = DIFFICULTY[S.difficulty].dogs;
+      for (var i = 0; i < count; i++) {
+        var pos = randomGrassCell();
+        var el = document.createElement("div");
+        el.className = "entity dog";
+        el.innerHTML = '<img src="Images/dog_down.png" id="dimg' + i + '">';
+        placeAt(el, pos.row, pos.col);
+        D.boardArea.appendChild(el);
+        S.dogs.push({ row: pos.row, col: pos.col, el: el, alive: true, id: i });
+      }
+    }
+
+    function randomGrassCell() {
+      for (var t = 0; t < 300; t++) {
+        var r = Math.floor(Math.random() * (ROWS - 2)) + 1;
+        var c = Math.floor(Math.random() * (COLS - 2)) + 1;
+        if (S.grid[r][c] !== CELL.GRASS) continue;
+        var dist = Math.abs(r - S.player.row) + Math.abs(c - S.player.col);
+        if (dist < 4) continue;
+        return { row: r, col: c };
+      }
+      // Fallback: scan bottom-right
+      for (var r = ROWS - 2; r >= 1; r--)
+        for (var c = COLS - 2; c >= 1; c--)
+          if (S.grid[r][c] === CELL.GRASS) return { row: r, col: c };
+      return { row: 8, col: 11 };
+    }
+
+    function tickDogs() {
+      if (S.paused || S.gameOver) return;
+
+      S.dogs.forEach(function (dog) {
+        if (!dog.alive) return;
+
+        var next = bfsNext(dog.row, dog.col, S.player.row, S.player.col);
+        if (!next) return;
+
+        dog.row = next.row;
+        dog.col = next.col;
+
+        var img = document.getElementById("dimg" + dog.id);
+        if (img) img.src = "Images/dog_" + next.dir + ".png";
+        placeAt(dog.el, dog.row, dog.col);
+      });
+
+      checkDogCollision();
+    }
+
+    // BFS: returns first step from (sr,sc) toward (tr,tc), or null
+    function bfsNext(sr, sc, tr, tc) {
+      if (sr === tr && sc === tc) return null;
+
+      var visited = {};
+      visited[sr + "," + sc] = true;
+      var queue = [{ r: sr, c: sc, first: null }];
+
+      while (queue.length) {
+        var cur = queue.shift();
+        for (var i = 0; i < DIRS.length; i++) {
+          var d = DIRS[i];
+          var nr = cur.r + d.dr;
+          var nc = cur.c + d.dc;
+          var key = nr + "," + nc;
+
+          if (visited[key]) continue;
+          if (nr < 0 || nr >= ROWS || nc < 0 || nc >= COLS) continue;
+          if (S.grid[nr][nc] === CELL.STONE) continue;
+          if (S.grid[nr][nc] === CELL.BRICK) continue;
+
+          visited[key] = true;
+          var first = cur.first || { row: nr, col: nc, dir: d.dir };
+
+          if (nr === tr && nc === tc) return first;
+          queue.push({ r: nr, c: nc, first: first });
+        }
+      }
+      return null;
+    }
+
+    function checkDogCollision() {
+      S.dogs.forEach(function (dog) {
+        if (!dog.alive) return;
+        if (dog.row === S.player.row && dog.col === S.player.col) hurtPlayer();
+      });
+    }
+
+    // ============================================================
+    //  BOMBS
+    // ============================================================
+    function placeBomb() {
+      var r = S.player.row;
+      var c = S.player.col;
+
+      // One bomb per cell
+      for (var i = 0; i < S.bombs.length; i++)
+        if (S.bombs[i].row === r && S.bombs[i].col === c) return;
+
+      var el = document.createElement("div");
+      el.className = "bomb";
+      el.innerHTML = '<img src="Images/bomb.png">';
+      placeAt(el, r, c);
+      D.boardArea.appendChild(el);
+
+      var bomb = { row: r, col: c, range: S.player.range, el: el, timer: null };
+      S.bombs.push(bomb);
+
+      bomb.timer = setTimeout(function () {
+        triggerExplosion(bomb);
+      }, BOMB_TIMER);
+    }
+
+    function triggerExplosion(bomb) {
+      if (S.gameOver) return;
+      if (bomb.el && bomb.el.parentNode) bomb.el.remove();
+      S.bombs = S.bombs.filter(function (b) {
+        return b !== bomb;
+      });
+
+      var hits = [[bomb.row, bomb.col]];
+
+      DIRS.forEach(function (d) {
+        for (var i = 1; i <= bomb.range; i++) {
+          var r = bomb.row + d.dr * i;
+          var c = bomb.col + d.dc * i;
+          if (r < 0 || r >= ROWS || c < 0 || c >= COLS) break;
+          if (S.grid[r][c] === CELL.STONE) break;
+
+          hits.push([r, c]);
+
+          if (S.grid[r][c] === CELL.BRICK) {
+            destroyBrick(r, c);
+            break;
+          }
+        }
+      });
+
+      hits.forEach(function (p) {
+        showExplosion(p[0], p[1]);
+      });
+
+      // Check player hit
+      hits.forEach(function (p) {
+        if (p[0] === S.player.row && p[1] === S.player.col) hurtPlayer();
+      });
+
+      // Check dog hits
+      S.dogs.forEach(function (dog) {
+        if (!dog.alive) return;
+        hits.forEach(function (p) {
+          if (dog.row === p[0] && dog.col === p[1]) {
+            dog.alive = false;
+            if (dog.el) dog.el.remove();
+          }
+        });
+      });
+      S.dogs = S.dogs.filter(function (d) {
+        return d.alive;
+      });
+    }
+
+    function destroyBrick(r, c) {
+      S.grid[r][c] = CELL.GRASS;
+      S.wallsDestroyed++;
+
+      var cell = document.getElementById("c" + r + "_" + c);
+      if (cell) {
+        cell.classList.replace("cell-brick", "cell-grass");
+        var wImg = cell.querySelector(".wall-img");
+        if (wImg) wImg.remove();
+      }
+
+      // Reveal hidden item if any
+      var key = r + "," + c;
+      if (S.items[key]) {
+        revealItem(r, c, S.items[key]);
+        delete S.items[key];
+      }
+
+      renderStats();
+    }
+
+    function showExplosion(r, c) {
+      var el = document.createElement("div");
+      el.className = "explosion";
+      placeAt(el, r, c);
+      D.boardArea.appendChild(el);
+      setTimeout(function () {
+        el.remove();
+      }, 500);
+    }
+
+    // ============================================================
+    //  ITEMS
+    // ============================================================
+    function revealItem(r, c, type) {
+      var src =
+        type === ITEM.TNT
+          ? "Images/tnt.png"
+          : type === ITEM.ICE
+            ? "Images/ice.png"
+            : "Images/heart.png";
+
+      var el = document.createElement("div");
+      el.className = "item";
+      el.dataset.r = r;
+      el.dataset.c = c;
+      el.dataset.type = type;
+      el.innerHTML = '<img src="' + src + '">';
+      placeAt(el, r, c);
+      D.boardArea.appendChild(el);
+    }
+
+    function pickupItem(r, c) {
+      var key = r + "," + c;
+      if (!S.items[key]) return;
+
+      var type = S.items[key];
+      delete S.items[key];
+
+      // Remove item element from board
+      D.boardArea.querySelectorAll(".item").forEach(function (el) {
+        if (+el.dataset.r === r && +el.dataset.c === c) el.remove();
+      });
+
+      applyItem(type);
+      setBadge(type);
+      renderStats();
+    }
+
+    function applyItem(type) {
+      if (type === ITEM.TNT) {
+        S.player.range *= 2;
+        S.tntCollected++;
+      } else if (type === ITEM.ICE) {
+        S.iceCollected++;
+        applyFreeze();
+      } else if (type === ITEM.HEART) {
+        // Broken heart — lose 1 life
+        S.player.lives = Math.max(0, S.player.lives - 1);
+        renderHearts();
+        if (S.player.lives <= 0) endGame();
+      }
+    }
+
+    function applyFreeze() {
+      S.player.frozen = true;
+      if (playerEl) playerEl.classList.add("frozen");
+      if (S.player.frozenTimer) clearTimeout(S.player.frozenTimer);
+      S.player.frozenTimer = setTimeout(function () {
+        S.player.frozen = false;
+        if (playerEl) playerEl.classList.remove("frozen");
+      }, FREEZE_DUR);
+    }
+
+    // Small badge on player showing last collected item
+    function setBadge(type) {
+      var badge = document.getElementById("player-badge");
+      if (!badge) return;
+      var src =
+        type === ITEM.TNT
+          ? "Images/tnt.png"
+          : type === ITEM.ICE
+            ? "Images/ice.png"
+            : "Images/heart.png";
+      badge.innerHTML =
+        '<img src="' + src + '" style="width:18px;height:18px;">';
+    }
+
+    // ============================================================
+    //  PLAYER HURT
+    // ============================================================
+    function hurtPlayer() {
+      if (S.gameOver) return;
+      if (playerEl && playerEl.classList.contains("hurt")) return; // invincibility window
+
+      S.player.lives--;
+      renderHearts();
+
+      if (playerEl) {
+        playerEl.classList.add("hurt");
+        setTimeout(function () {
+          if (playerEl) playerEl.classList.remove("hurt");
+        }, 500);
+      }
+
+      if (S.player.lives <= 0) endGame();
+    }
+
+    // ============================================================
+    //  PAUSE
+    // ============================================================
+    function togglePause() {
+      if (S.gameOver) return;
+      S.paused = !S.paused;
+
+      if (S.paused) {
+        pauseAt = Date.now();
+        D.pausePopup.classList.remove("hidden");
+        stopTimers();
+      } else {
+        totalPaused += Date.now() - pauseAt;
+        D.pausePopup.classList.add("hidden");
+        S.timerInterval = setInterval(tickTimer, 1000);
+        S.moveInterval = setInterval(tickPlayer, PLAYER_SPEED);
+        S.dogInterval = setInterval(tickDogs, DOG_SPEED);
+      }
+    }
+
+    D.continueBtn.addEventListener("click", function () {
+      if (S.paused) togglePause();
+    });
+
+    // ============================================================
+    //  TIMER
+    // ============================================================
+    function tickTimer() {
+      var elapsed = Math.floor((Date.now() - S.startTime - totalPaused) / 1000);
+      var mm = String(Math.floor(elapsed / 60)).padStart(2, "0");
+      var ss = String(elapsed % 60).padStart(2, "0");
+      D.timer.textContent = mm + ":" + ss;
+    }
+
+    // ============================================================
+    //  GAME OVER
+    // ============================================================
+    function endGame() {
+      if (S.gameOver) return;
+      S.gameOver = true;
+      stopTimers();
+
+      // Cancel pending bomb timers
+      S.bombs.forEach(function (b) {
+        clearTimeout(b.timer);
+        if (b.el && b.el.parentNode) b.el.remove();
+      });
+      S.bombs = [];
+
+      var time = D.timer.textContent;
+      D.gameoverMsg.textContent =
+        "Good job " + S.username + "! your time " + time + " with results:";
+      D.goWalls.textContent = S.wallsDestroyed;
+      D.goTnt.textContent = S.tntCollected;
+      D.goIce.textContent = S.iceCollected;
+
+      D.saveScoreBtn.className = "btn-orange";
+      D.saveScoreBtn.disabled = false;
+      D.saveScoreBtn.textContent = "Save Score";
+      D.lbBtn.className = "btn-blue";
+
+      setTimeout(function () {
+        D.gameScreen.classList.add("hidden");
+        D.gameoverScreen.classList.remove("hidden");
+      }, 700);
+    }
+
+    D.saveScoreBtn.addEventListener("click", function () {
+      if (this.disabled) return;
+      var scores = JSON.parse(localStorage.getItem("bombskuy") || "[]");
+      scores.push({
+        username: S.username,
+        time: D.timer.textContent,
+        walls: S.wallsDestroyed,
+        tnt: S.tntCollected,
+        ice: S.iceCollected,
+      });
+      localStorage.setItem("bombskuy", JSON.stringify(scores));
+      this.textContent = "Saved!";
+      this.disabled = true;
+    });
+
+    D.lbBtn.addEventListener("click", showLeaderboard);
+
+    // ============================================================
+    //  LEADERBOARD
+    // ============================================================
+    function showLeaderboard() {
+      D.gameoverScreen.classList.add("hidden");
+      D.lbScreen.classList.remove("hidden");
+
+      D.playAgainBtn.className = "btn-orange";
+      D.resetBtn.className = "btn-blue";
+
+      var scores = JSON.parse(localStorage.getItem("bombskuy") || "[]");
+      scores.sort(function (a, b) {
+        if (b.walls !== a.walls) return b.walls - a.walls;
+        if (b.tnt !== a.tnt) return b.tnt - a.tnt;
+        return b.ice - a.ice;
+      });
+
+      D.lbBody.innerHTML = "";
+      scores.forEach(function (s) {
+        var tr = document.createElement("tr");
+        tr.innerHTML =
+          "<td>" +
+          s.username +
+          "</td>" +
+          "<td>" +
+          s.time +
+          "</td>" +
+          "<td>" +
+          s.walls +
+          "</td>" +
+          "<td>" +
+          s.tnt +
+          "</td>" +
+          "<td>" +
+          s.ice +
+          "</td>";
+        D.lbBody.appendChild(tr);
+      });
+    }
+
+    D.playAgainBtn.addEventListener("click", function () {
+      D.lbScreen.classList.add("hidden");
+      D.userInput.value = "";
+      D.levelSelect.value = "";
+      D.playBtn.disabled = true;
+      D.welcome.classList.remove("hidden");
+    });
+
+    D.resetBtn.addEventListener("click", function () {
+      localStorage.removeItem("bombskuy");
+      showLeaderboard();
+    });
+
+    // ============================================================
+    //  HELPERS
+    // ============================================================
+    function placeAt(el, row, col) {
+      el.style.top = row * TILE + "px";
+      el.style.left = col * TILE + "px";
+    }
+
+    function renderHearts() {
+      D.hearts.innerHTML = "";
+      for (var i = 0; i < S.player.lives; i++) {
+        var img = document.createElement("img");
+        img.src = "Images/heart_indicator.png";
+        D.hearts.appendChild(img);
+      }
+    }
+
+    function renderStats() {
+      D.wallsCount.textContent = S.wallsDestroyed;
+      D.tntCount.textContent = S.tntCollected;
+      D.iceCount.textContent = S.iceCollected;
+    }
+  </script>
+</html>

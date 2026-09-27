@@ -1,0 +1,413 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>BOMBSKUY</title>
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        background: #111;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        font-family: Arial, sans-serif;
+      }
+
+      /* === GAME WRAPPER: ukuran tetap 1000x600 === */
+      #game-wrapper {
+        width: 1000px;
+        height: 600px;
+        background: #1c1c1c;
+        position: relative; /* penting! supaya overlay bisa absolute di dalamnya */
+        overflow: hidden;
+      }
+
+      /*
+      .overlay = layer yang nutup seluruh game-wrapper
+      dipakai untuk welcome screen, difficulty screen, dan countdown
+    */
+      .overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        background: rgba(0, 0, 0, 0.88);
+        z-index: 10;
+      }
+
+      /* Utility class — kalau elemen punya class ini, dia tersembunyi */
+      .hidden {
+        display: none !important;
+      }
+
+      /* === WELCOME SCREEN === */
+      #welcome-screen h1 {
+        color: #ff4500;
+        font-size: 52px;
+        letter-spacing: 4px;
+        margin-bottom: 32px;
+      }
+
+      #username-input {
+        padding: 10px 16px;
+        font-size: 18px;
+        width: 280px;
+        text-align: center;
+        background: #111;
+        color: #fff;
+        border: 2px solid #ff4500;
+        border-radius: 4px;
+        margin-bottom: 16px;
+        outline: none;
+      }
+
+      #play-btn {
+        padding: 12px 40px;
+        font-size: 18px;
+        background: #ff4500;
+        color: #fff;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        margin-bottom: 12px;
+        width: 280px;
+      }
+
+      /* Tombol disabled punya tampilan beda */
+      #play-btn:disabled {
+        background: #444;
+        color: #888;
+        cursor: not-allowed;
+      }
+
+      #instruction-btn {
+        padding: 8px 24px;
+        font-size: 14px;
+        background: transparent;
+        color: #aaa;
+        border: 1px solid #555;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+
+      #instruction-btn:hover {
+        border-color: #aaa;
+        color: #fff;
+      }
+
+      /* === DIFFICULTY SCREEN === */
+      #difficulty-screen h2 {
+        color: #fff;
+        font-size: 28px;
+        margin-bottom: 28px;
+      }
+
+      .diff-btn {
+        display: block;
+        width: 220px;
+        padding: 14px;
+        font-size: 16px;
+        font-weight: bold;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        margin-bottom: 12px;
+        letter-spacing: 1px;
+      }
+
+      .diff-btn[data-level="easy"] {
+        background: #4caf50;
+        color: #fff;
+      }
+      .diff-btn[data-level="medium"] {
+        background: #ff9800;
+        color: #fff;
+      }
+      .diff-btn[data-level="hard"] {
+        background: #f44336;
+        color: #fff;
+      }
+
+      /* === COUNTDOWN SCREEN === */
+      #countdown-screen h2 {
+        color: #fff;
+        font-size: 24px;
+        margin-bottom: 20px;
+        letter-spacing: 2px;
+      }
+
+      #countdown-number {
+        font-size: 120px;
+        font-weight: bold;
+        color: #ff4500;
+        line-height: 1;
+      }
+
+      /* === INSTRUCTION POPUP === */
+      /*
+      Popup instruksi pakai z-index lebih tinggi (20)
+      supaya muncul di atas overlay lain kalau perlu
+    */
+      #instruction-popup {
+        z-index: 20;
+        background: rgba(0, 0, 0, 0.75);
+      }
+
+      .popup-box {
+        background: #222;
+        border: 2px solid #ff4500;
+        border-radius: 8px;
+        padding: 28px 32px;
+        width: 460px;
+        position: relative;
+        color: #ccc;
+      }
+
+      .popup-box h2 {
+        color: #ff4500;
+        margin-bottom: 16px;
+        font-size: 20px;
+      }
+
+      .popup-box p {
+        line-height: 1.9;
+        font-size: 14px;
+      }
+
+      #close-btn {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        width: 28px;
+        height: 28px;
+        background: #f44336;
+        color: #fff;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-weight: bold;
+        font-size: 13px;
+      }
+
+      /* === GAME SCREEN (placeholder hari ini) === */
+      #game-screen {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        color: #fff;
+        font-size: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="game-wrapper">
+      <!-- ==================== WELCOME SCREEN ==================== -->
+      <div id="welcome-screen" class="overlay">
+        <h1>BOMBSKUY</h1>
+        <input type="text" id="username-input" placeholder="Enter your name" />
+        <button id="play-btn" disabled="disabled">Play Game</button>
+        <button id="instruction-btn">Instruction</button>
+      </div>
+
+      <!-- ==================== DIFFICULTY SCREEN ==================== -->
+      <div id="difficulty-screen" class="overlay hidden">
+        <h2>Choose Difficulty</h2>
+        <button class="diff-btn" data-level="easy">EASY</button>
+        <button class="diff-btn" data-level="medium">MEDIUM</button>
+        <button class="diff-btn" data-level="hard">HARD</button>
+      </div>
+
+      <!-- ==================== COUNTDOWN SCREEN ==================== -->
+      <div id="countdown-screen" class="overlay hidden">
+        <h2>GET READY!</h2>
+        <div id="countdown-number">3</div>
+      </div>
+
+      <!-- ==================== INSTRUCTION POPUP ==================== -->
+      <!--
+      Ini BUKAN overlay biasa — ini popup yang bisa muncul
+      di atas screen manapun (z-index lebih tinggi)
+    -->
+      <div id="instruction-popup" class="overlay hidden">
+        <div class="popup-box">
+          <button id="close-btn">X</button>
+          <h2>How to Play</h2>
+          <p>
+            <strong style="color: #fff">Movement</strong><br />
+            W / Up Arrow &mdash; Move Up<br />
+            S / Down Arrow &mdash; Move Down<br />
+            A / Left Arrow &mdash; Move Left<br />
+            D / Right Arrow &mdash; Move Right<br /><br />
+
+            <strong style="color: #fff">Bomb</strong><br />
+            Spacebar &mdash; Place a bomb (explodes in 5 seconds)<br />
+            Explosion affects 1 block in each direction<br /><br />
+
+            <strong style="color: #fff">Items (hidden in walls)</strong><br />
+            &#128148; Broken Heart &mdash; Lose a heart<br />
+            &#128163; TNT &mdash; Double explosion range<br />
+            &#129398; Ice Cube &mdash; Frozen for 5 seconds<br /><br />
+
+            <strong style="color: #fff">Tips</strong><br />
+            Avoid dogs! Touching one costs a heart.<br />
+            Game over when all 3 hearts are gone.
+          </p>
+        </div>
+      </div>
+
+      <!-- ==================== GAME SCREEN (placeholder) ==================== -->
+      <div id="game-screen" class="hidden">
+        <!-- Besok: gameboard, karakter, HUD, dll. ditaruh sini -->
+        <p>Game will be here...</p>
+      </div>
+    </div>
+    <!-- end #game-wrapper -->
+
+    <script>
+      // =================================================================
+      // BAGIAN 1: STATE
+      // Variabel-variabel ini nyimpen "kondisi" game saat ini.
+      // Semua pakai var (bukan let/const — ini ES5).
+      // =================================================================
+      var playerName = "";
+      var selectedDifficulty = "";
+
+      // =================================================================
+      // BAGIAN 2: DOM REFERENCES
+      // Kita "pegang" elemen HTML ke variabel JS dulu,
+      // supaya nggak perlu getElementById berulang-ulang.
+      // =================================================================
+      var usernameInput = document.getElementById("username-input");
+      var playBtn = document.getElementById("play-btn");
+      var instructionBtn = document.getElementById("instruction-btn");
+      var closeBtn = document.getElementById("close-btn");
+
+      var welcomeScreen = document.getElementById("welcome-screen");
+      var difficultyScreen = document.getElementById("difficulty-screen");
+      var countdownScreen = document.getElementById("countdown-screen");
+      var instructionPopup = document.getElementById("instruction-popup");
+      var countdownNumber = document.getElementById("countdown-number");
+      var gameScreen = document.getElementById("game-screen");
+
+      // querySelectorAll = ambil SEMUA elemen yang cocok dengan selector
+      // hasilnya bukan array biasa, tapi NodeList — tapi bisa di-loop
+      var diffBtns = document.querySelectorAll(".diff-btn");
+
+      // =================================================================
+      // BAGIAN 3: HELPER FUNCTIONS
+      // Dua fungsi kecil ini kita pakai terus-terusan.
+      // Lebih baik dibungkus fungsi daripada nulis classList.add/.remove
+      // berkali-kali.
+      // =================================================================
+      function showScreen(element) {
+        element.classList.remove("hidden");
+      }
+
+      function hideScreen(element) {
+        element.classList.add("hidden");
+      }
+
+      // =================================================================
+      // BAGIAN 4: EVENT LISTENERS
+      // Urutan: pasang listener → user lakukan aksi → function dijalankan
+      // =================================================================
+
+      // --- 4a. Input username ---
+      // Event 'input' terpanggil SETIAP KALI ada perubahan di input field.
+      usernameInput.addEventListener("input", function () {
+        // .trim() = buang spasi di awal/akhir
+        // Kalau setelah di-trim masih ada isinya, enable tombol
+        if (usernameInput.value.trim() !== "") {
+          playBtn.disabled = false;
+        } else {
+          playBtn.disabled = true;
+        }
+      });
+
+      // --- 4b. Tombol Play Game ---
+      playBtn.addEventListener("click", function () {
+        // Simpan nama ke state
+        playerName = usernameInput.value.trim();
+
+        // Sembunyikan welcome screen, tampilkan difficulty screen
+        hideScreen(welcomeScreen);
+        showScreen(difficultyScreen);
+      });
+
+      // --- 4c. Tombol Instruction ---
+      instructionBtn.addEventListener("click", function () {
+        showScreen(instructionPopup);
+      });
+
+      // --- 4d. Tombol X (tutup instruksi) ---
+      closeBtn.addEventListener("click", function () {
+        hideScreen(instructionPopup);
+      });
+
+      // --- 4e. Difficulty buttons ---
+      // querySelectorAll mengembalikan NodeList, kita loop pakai for biasa (ES5)
+      // Catatan: JANGAN pakai forEach di sini kalau mau strict ES5
+      for (var i = 0; i < diffBtns.length; i++) {
+        diffBtns[i].addEventListener("click", function () {
+          // 'this' di dalam addEventListener merujuk ke elemen yang diklik
+          // getAttribute() = ambil nilai atribut HTML tertentu
+          selectedDifficulty = this.getAttribute("data-level");
+
+          hideScreen(difficultyScreen);
+          startCountdown();
+        });
+      }
+
+      // =================================================================
+      // BAGIAN 5: COUNTDOWN
+      // setInterval = jalankan function setiap X milidetik
+      // clearInterval = hentikan interval tersebut
+      // =================================================================
+      function startCountdown() {
+        var count = 3;
+        countdownNumber.innerHTML = count; // .innerHTML = isi elemen dengan teks/HTML
+        showScreen(countdownScreen);
+
+        var interval = setInterval(function () {
+          count = count - 1; // ES5: jangan pakai count-- kalau mau eksplisit
+
+          if (count > 0) {
+            countdownNumber.innerHTML = count;
+          } else {
+            // Hentikan interval, lanjut ke game
+            clearInterval(interval);
+            hideScreen(countdownScreen);
+            startGame();
+          }
+        }, 1000); // 1000ms = 1 detik
+      }
+
+      // =================================================================
+      // BAGIAN 6: START GAME (placeholder hari ini)
+      // =================================================================
+      function startGame() {
+        showScreen(gameScreen);
+        // Besok: inisialisasi gameboard, karakter, anjing, dll.
+        console.log(
+          "Game started! Player: " +
+            playerName +
+            " | Difficulty: " +
+            selectedDifficulty,
+        );
+      }
+    </script>
+  </body>
+</html>
